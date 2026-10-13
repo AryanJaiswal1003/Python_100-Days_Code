@@ -12,6 +12,8 @@ __pycache__/
 venv/
 ENV/
 .venv
+/Spotify Playlist/browser.json
+/Spotify Playlist/oauth.json
 
 # Jupyter Notebooks
 .ipynb_checkpoints
