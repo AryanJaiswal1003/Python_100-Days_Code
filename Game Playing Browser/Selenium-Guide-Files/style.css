@@ -1,0 +1,32 @@
+body { font-family: "DejaVu Sans", Arial, sans-serif; margin: 0; background: #f4f6f9; color: #1d2733; font-size: 15px; }
+#topnav { background: #1d3557; padding: 10px 24px; }
+#topnav a { color: #dfe7f1; margin-right: 22px; text-decoration: none; }
+#topnav a.active { color: #ffffff; font-weight: bold; border-bottom: 2px solid #e76f51; }
+header { padding: 14px 24px 4px; }
+header h1 { margin: 0; color: #1d3557; font-size: 28px; }
+.tagline { margin: 4px 0 0; color: #5b6774; }
+main { padding: 0 24px 16px; }
+#search-box { margin: 10px 0; }
+#search { padding: 6px 8px; width: 260px; border: 1px solid #9aa6b2; border-radius: 4px; }
+button { padding: 6px 14px; border: 0; border-radius: 4px; background: #2a9d8f; color: white; cursor: pointer; font-size: 14px; }
+button:disabled { background: #9aa6b2; }
+#result-count { color: #5b6774; margin: 6px 0; font-size: 14px; }
+#job-list { list-style: none; padding: 0; margin: 0 0 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.job { background: white; border: 1px solid #d5dbe2; border-radius: 6px; padding: 8px 12px; }
+.job.remote { border-left: 4px solid #2a9d8f; }
+.job.new { background: #fff8e6; }
+.job-title { margin: 0 0 4px; font-size: 16px; }
+.job-title a { color: #1d3557; }
+.company { font-weight: bold; } .location { color: #5b6774; }
+.salary { float: right; color: #2a7d3f; font-weight: bold; }
+#account { display: flex; gap: 18px; margin-top: 14px; }
+#login { background: white; border: 1px solid #d5dbe2; border-radius: 6px; padding: 10px 14px; width: 330px; }
+#login h2 { margin: 0 0 6px; font-size: 18px; }
+#login label { display: flex; justify-content: space-between; align-items: center; margin: 6px 0; }
+#login label.check { justify-content: flex-start; gap: 6px; }
+#login input[type=text], #login input[type=password] { width: 170px; padding: 4px; }
+#login-msg { color: #2a7d3f; font-weight: bold; min-height: 18px; margin: 6px 0 0; }
+#extras { display: flex; flex-direction: column; gap: 10px; }
+#alert-btn { background: #e76f51; align-self: flex-start; }
+#news-frame { width: 330px; height: 120px; border: 1px solid #d5dbe2; border-radius: 6px; background: white; }
+footer { padding: 10px 24px; color: #5b6774; font-size: 13px; border-top: 1px solid #d5dbe2; }

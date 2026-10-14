@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>DataJobs - Jobs for data people</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav id="topnav">
+  <a href="index.html" class="nav-link active">Jobs</a>
+  <a href="about.html" class="nav-link">About</a>
+  <a href="salaries.html" class="nav-link" target="_blank">Salary guide (new tab)</a>
+</nav>
+<header>
+  <h1>DataJobs</h1>
+  <p class="tagline">Jobs for analysts, scientists and engineers.</p>
+</header>
+<main>
+<section id="search-box">
+  <input type="text" id="search" name="q" placeholder="Search job titles">
+  <button id="search-btn" type="button">Search</button>
+  <p id="result-count">Showing 4 jobs</p>
+</section>
+<ul id="job-list">
+  <li class="job" id="job-1" data-salary="95000">
+    <h3 class="job-title"><a href="jobs/1.html">Data Analyst</a></h3>
+    <span class="company">Acme Retail</span> <span class="location">Pune</span>
+    <span class="salary">$95,000</span>
+  </li>
+  <li class="job remote" id="job-2" data-salary="130000">
+    <h3 class="job-title"><a href="jobs/2.html">Data Scientist</a></h3>
+    <span class="company">Nimbus AI</span> <span class="location">Remote</span>
+    <span class="salary">$130,000</span>
+  </li>
+  <li class="job" id="job-3" data-salary="120000">
+    <h3 class="job-title"><a href="jobs/3.html">ML Engineer</a></h3>
+    <span class="company">Orbit Labs</span> <span class="location">Bengaluru</span>
+    <span class="salary">$120,000</span>
+  </li>
+  <li class="job" id="job-4" data-salary="88000">
+    <h3 class="job-title"><a href="jobs/4.html">BI Analyst</a></h3>
+    <span class="company">Kite Bank</span> <span class="location">Mumbai</span>
+    <span class="salary">$88,000</span>
+  </li>
+</ul>
+<button id="load-more" type="button">Load more jobs</button>
+<section id="account">
+  <form id="login" action="#">
+    <h2>Log in</h2>
+    <label>Username <input type="text" id="username" name="username"></label>
+    <label>Password <input type="password" id="password" name="password"></label>
+    <label class="check"><input type="checkbox" id="remember" name="remember"> Remember me</label>
+    <label>I am a
+      <select id="role" name="role">
+        <option value="seeker">Job seeker</option>
+        <option value="recruiter">Recruiter</option>
+        <option value="student">Student</option>
+      </select>
+    </label>
+    <button type="submit" id="login-btn">Log in</button>
+    <p id="login-msg"></p>
+  </form>
+  <div id="extras">
+    <button id="alert-btn" type="button">Create job alert</button>
+    <iframe id="news-frame" name="news" src="newsletter.html" title="Newsletter"></iframe>
+  </div>
+</section>
+</main>
+<footer><p>&copy; 2026 DataJobs. Demo site for the Selenium guide.</p></footer>
+<script>
+const MORE = [["Data Engineer", "Delta Logistics", "Chennai", 110000],
+              ["Research Scientist", "Quanta Health", "Remote", 140000],
+              ["Analytics Manager", "Kite Bank", "Mumbai", 125000]];
+function count() {
+  const shown = [...document.querySelectorAll("li.job")].filter(li => li.style.display !== "none");
+  document.getElementById("result-count").textContent = "Showing " + shown.length + " jobs";
+}
+document.getElementById("search-btn").addEventListener("click", () => {
+  const q = document.getElementById("search").value.toLowerCase();
+  document.querySelectorAll("li.job").forEach(li => {
+    const t = li.querySelector(".job-title").textContent.toLowerCase();
+    li.style.display = t.includes(q) ? "" : "none";
+  });
+  count();
+});
+document.getElementById("search").addEventListener("keydown", e => {
+  if (e.key === "Enter") document.getElementById("search-btn").click();
+});
+document.getElementById("load-more").addEventListener("click", e => {
+  e.target.disabled = true; e.target.textContent = "Loading...";
+  setTimeout(() => {                       // simulate a slow server: 1.5 s
+    const ul = document.getElementById("job-list");
+    MORE.forEach(([title, co, loc, pay], i) => {
+      const li = document.createElement("li");
+      li.className = "job new"; li.id = "job-" + (5 + i); li.dataset.salary = pay;
+      li.innerHTML = `<h3 class="job-title"><a href="jobs/${5 + i}.html">${title}</a></h3>
+        <span class="company">${co}</span> <span class="location">${loc}</span>
+        <span class="salary">$${pay.toLocaleString("en-US")}</span>`;
+      ul.appendChild(li);
+    });
+    e.target.textContent = "No more jobs"; count();
+  }, 1500);
+});
+document.getElementById("login").addEventListener("submit", e => {
+  e.preventDefault();
+  const user = document.getElementById("username").value;
+  const role = document.getElementById("role");
+  const msg = user ? "Welcome, " + user + " (" + role.selectedOptions[0].text + ")" : "Enter a username";
+  document.getElementById("login-msg").textContent = msg;
+});
+document.getElementById("alert-btn").addEventListener("click", () => {
+  alert("Job alert saved for: data jobs");
+});
+</script>
+</body>
+</html>
