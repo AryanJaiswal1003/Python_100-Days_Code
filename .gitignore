@@ -12,6 +12,7 @@ __pycache__/
 venv/
 ENV/
 .venv
+/chrome_profile/
 /Spotify Playlist/browser.json
 /Spotify Playlist/oauth.json
 
