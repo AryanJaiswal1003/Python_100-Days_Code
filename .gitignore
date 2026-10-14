@@ -13,6 +13,7 @@ venv/
 ENV/
 .venv
 /chrome_profile/
+/Automating Exercise Routine/chrome_profile/
 /Spotify Playlist/browser.json
 /Spotify Playlist/oauth.json
 
