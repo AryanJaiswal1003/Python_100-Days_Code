@@ -1,0 +1,467 @@
+FLASK RULES AND BEST PRACTICES FOR BEGINNERS
+==============================================
+
+This guide describes the conventions and rules that make a Flask project
+predictable, maintainable, and safe. Flask is flexible, but following these
+conventions prevents many common "template not found", missing CSS, routing,
+and deployment errors.
+
+
+1. RECOMMENDED PROJECT STRUCTURE
+--------------------------------
+
+For a small Flask project:
+
+    project/
+    |-- app.py                 # Creates the Flask app and routes
+    |-- requirements.txt       # Python dependencies
+    |-- .env                   # Local secrets; never commit this file
+    |-- templates/             # Jinja HTML templates
+    |   |-- base.html
+    |   |-- index.html
+    |   `-- error/
+    |       |-- 404.html
+    |       `-- 500.html
+    `-- static/                # Files served without Jinja rendering
+        |-- css/
+        |   `-- style.css
+        |-- js/
+        |   `-- app.js
+        `-- images/
+            `-- logo.png
+
+For a larger application, use an application package:
+
+    project/
+    |-- run.py
+    |-- app/
+    |   |-- __init__.py
+    |   |-- routes.py
+    |   |-- templates/
+    |   `-- static/
+    `-- tests/
+
+The names can be changed, but the locations must match the paths configured
+in Flask. Flask uses "templates" and "static" by convention.
+
+
+2. CREATING THE FLASK APPLICATION
+---------------------------------
+
+    from flask import Flask
+
+    app = Flask(__name__)
+
+    if __name__ == "__main__":
+        app.run(debug=True)
+
+Rules:
+
+* Pass __name__ to Flask so Flask can find templates and static files.
+* Keep application creation separate from starting the development server.
+* Put app.run() inside if __name__ == "__main__":.
+* Do not use debug=True in production.
+* Keep the Flask instance name predictable (usually "app") for WSGI servers.
+* Do not create multiple Flask instances accidentally in different modules.
+
+
+3. TEMPLATES FOLDER AND JINJA
+-----------------------------
+
+HTML files rendered by Flask belong in the templates folder:
+
+    project/
+    |-- app.py
+    `-- templates/
+        `-- index.html
+
+Render a template from a route:
+
+    from flask import render_template
+
+    @app.route("/")
+    def home():
+        return render_template("index.html", title="Home")
+
+Rules:
+
+* The default folder name is exactly "templates" (lowercase).
+* The template path is relative to templates, not the operating-system path:
+      render_template("pages/about.html")
+* Use forward slashes in template names, even on Windows.
+* Do not put templates in static/.
+* Template names are case-sensitive on many deployment systems.
+* A missing file raises TemplateNotFound; check spelling and location first.
+* Use Jinja variables with {{ variable }}.
+* Use Jinja statements with {% statement %}.
+* Escape user-provided HTML by default; do not use |safe on untrusted input.
+* Do not put database queries or complex business logic in templates.
+
+Template inheritance:
+
+    <!-- templates/base.html -->
+    <!doctype html>
+    <html>
+    <head>
+        <title>{% block title %}My App{% endblock %}</title>
+    </head>
+    <body>
+        {% block content %}{% endblock %}
+    </body>
+    </html>
+
+    <!-- templates/index.html -->
+    {% extends "base.html" %}
+    {% block title %}Home{% endblock %}
+    {% block content %}
+        <h1>{{ heading }}</h1>
+    {% endblock %}
+
+Use include for reusable fragments:
+
+    {% include "partials/navbar.html" %}
+
+
+4. STATIC FOLDER, CSS, JAVASCRIPT, AND IMAGES
+---------------------------------------------
+
+Static files are not rendered as templates. They are CSS, JavaScript, fonts,
+images, and other files sent to the browser unchanged.
+
+Correct structure:
+
+    static/
+    |-- css/style.css
+    |-- js/app.js
+    `-- images/logo.png
+
+Always generate static URLs with url_for:
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+
+Rules:
+
+* Use static/ for CSS, JavaScript, and images, not templates/.
+* Do not write href="css/style.css" unless you deliberately control every URL.
+* url_for("static", filename=...) handles the correct application path.
+* filename is relative to static/, so use "css/style.css", not "static/css/style.css".
+* Check filename spelling, letter case, and file extension.
+* Use alt text for meaningful images; use alt="" for decorative images.
+* Do not store secrets, source code, or private uploads in static/.
+* User uploads should be validated and stored outside source-controlled files.
+* For large production sites, serve static assets through a web server or CDN.
+
+If the folder has a different name, configure it explicitly:
+
+    app = Flask(__name__, static_folder="assets")
+
+
+5. ROUTES AND URLS
+------------------
+
+Define a route with a URL rule and a view function:
+
+    @app.route("/")
+    def home():
+        return render_template("index.html")
+
+Rules:
+
+* Every endpoint needs a unique URL rule and function endpoint.
+* Use clear, lowercase URL paths such as /about or /products/<int:id>.
+* Use url_for("function_name") instead of hard-coding links:
+      url_for("home")
+      url_for("profile", username="robert")
+* The endpoint is normally the view function name.
+* A trailing slash matters:
+      /about and /about/ are different URL rules.
+* Use one consistent trailing-slash convention.
+* Dynamic values must be converted and validated:
+      @app.route("/users/<int:user_id>")
+* Return a valid Flask response: text, HTML, tuple, dict/JSON, or a Response.
+* Keep route functions short; call service/helper functions for larger work.
+
+HTTP methods:
+
+    @app.route("/contact", methods=["GET", "POST"])
+    def contact():
+        if request.method == "POST":
+            # Validate and process submitted data.
+            ...
+        return render_template("contact.html")
+
+Rules:
+
+* GET should read or display data and should not change server state.
+* POST should create or update data.
+* PUT/PATCH should update data when an API needs those methods.
+* DELETE should remove data.
+* Use 405 responses for unsupported methods; Flask does this automatically
+  when methods are declared correctly.
+* Redirect after a successful POST to prevent duplicate form submissions:
+      return redirect(url_for("home"))
+
+
+6. REQUEST DATA AND RESPONSES
+-----------------------------
+
+Import only what is needed:
+
+    from flask import request, redirect, url_for, jsonify
+
+Common request sources:
+
+    request.args.get("q")       # Query string: /search?q=flask
+    request.form.get("email")   # Submitted form data
+    request.files.get("photo")  # Uploaded file
+    request.get_json(silent=True) # JSON request body
+
+Rules:
+
+* Treat all request data as untrusted input.
+* Validate required values, types, length, and allowed choices.
+* Do not use request.form["field"] unless the field is guaranteed to exist.
+* Never build SQL, shell commands, or HTML by string-concatenating user input.
+* Use parameterized database queries and escaping/approved libraries.
+* Return appropriate status codes: 200, 201, 204, 400, 401, 403, 404, 405,
+  409, and 500 as appropriate.
+* Return JSON with jsonify for JSON APIs:
+      return jsonify({"message": "Created"}), 201
+
+
+7. FORMS AND CSRF
+-----------------
+
+For server-rendered forms:
+
+* Use method="post" and a correct action generated with url_for.
+* Validate every field on the server, even when browser validation exists.
+* Display clear validation errors without exposing internal exceptions.
+* Add CSRF protection for state-changing browser forms. Flask-WTF is a common
+  choice.
+* Never trust hidden form fields; users can modify them.
+* Limit upload size with MAX_CONTENT_LENGTH.
+* Use secure, allowlisted file names with werkzeug.utils.secure_filename.
+* Do not use GET for passwords, tokens, or state-changing actions.
+
+
+8. CONFIGURATION AND SECRETS
+----------------------------
+
+Use configuration instead of scattering settings through route functions:
+
+    app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
+
+Rules:
+
+* Keep secrets in environment variables or a secret manager.
+* Never commit SECRET_KEY, database passwords, API keys, or tokens.
+* Add .env and local credential files to .gitignore.
+* Use separate development, testing, and production configuration.
+* A strong SECRET_KEY is required for signed sessions and CSRF protection.
+* Do not use a predictable or publicly shared SECRET_KEY.
+* Treat configuration values as untrusted until parsed and validated.
+
+
+9. DEBUGGING AND COMMON ERRORS
+------------------------------
+
+Use the error and traceback to locate the real cause. Common errors:
+
+* TemplateNotFound:
+  Check that the file is inside templates/, the name is correct, and the
+  current app instance points to the expected project directory.
+* 404 Not Found:
+  Check the route path, HTTP method, trailing slash, and the URL being opened.
+* 405 Method Not Allowed:
+  Add the intended method to methods=[...] or use the correct form method.
+* CSS/JS/image 404:
+  Check that the file is inside static/ and that the template uses url_for.
+* ImportError:
+  Activate the intended virtual environment and install requirements.
+* Port already in use:
+  Stop the old development server or choose another development port.
+* Changes not appearing:
+  Check that the browser is loading the correct server and clear cached assets
+  when appropriate.
+
+Useful development command:
+
+    flask --app app run --debug
+
+On Windows PowerShell, quote paths containing spaces:
+
+    cd "D:\path\to\project"
+    python -m flask --app app run --debug
+
+Never expose the interactive debugger to the public internet.
+
+
+10. APPLICATION FACTORIES AND BLUEPRINTS
+----------------------------------------
+
+Application factory pattern:
+
+    def create_app():
+        app = Flask(__name__)
+        app.config.from_object("config.Config")
+        return app
+
+Use blueprints to split features into modules:
+
+    from flask import Blueprint
+
+    pages = Blueprint("pages", __name__)
+
+    @pages.route("/")
+    def home():
+        return "Home"
+
+Register it once:
+
+    app.register_blueprint(pages)
+
+Rules:
+
+* Register extensions and blueprints during app creation.
+* Avoid circular imports by keeping app creation in one place.
+* Give blueprint names and URL prefixes that describe their feature.
+* Do not register the same blueprint repeatedly.
+
+
+11. DATABASES AND APPLICATION LOGIC
+-----------------------------------
+
+Rules:
+
+* Keep database code out of templates.
+* Use an application-supported database extension or a carefully managed
+  connection lifecycle.
+* Close connections and cursors reliably.
+* Use migrations for schema changes; do not manually edit production tables.
+* Use transactions for related changes.
+* Use parameterized queries or an ORM; never interpolate user input into SQL.
+* Handle missing records explicitly and return 404 where appropriate.
+* Do not log passwords, tokens, session cookies, or sensitive personal data.
+
+
+12. SECURITY RULES
+------------------
+
+* Keep Flask and dependencies updated.
+* Validate and sanitize all external input.
+* Use CSRF protection for cookie-authenticated state-changing requests.
+* Hash passwords with a password-hashing library; never encrypt or store them
+  as plain text.
+* Use secure, HttpOnly, and appropriate SameSite cookie settings.
+* Use HTTPS in production.
+* Set a strict, reviewed Content Security Policy where practical.
+* Protect against open redirects by validating redirect targets.
+* Restrict upload extensions, MIME types, file sizes, and storage locations.
+* Do not render untrusted content with Jinja's |safe filter.
+* Use least-privilege database and service credentials.
+* Return generic error messages to users and keep detailed errors in protected
+  logs.
+
+
+13. ERROR HANDLERS AND LOGGING
+------------------------------
+
+Custom error pages:
+
+    @app.errorhandler(404)
+    def not_found(error):
+        return render_template("error/404.html"), 404
+
+Rules:
+
+* Preserve the correct HTTP status code when rendering an error page.
+* Do not hide unexpected exceptions with broad except blocks.
+* Log actionable server-side details without secrets.
+* Use structured logging for production services.
+* Show friendly messages to users, not tracebacks or internal paths.
+
+
+14. TESTING
+-----------
+
+Use Flask's test client:
+
+    def test_home_page():
+        response = app.test_client().get("/")
+        assert response.status_code == 200
+        assert b"Home" in response.data
+
+Test at least:
+
+* Successful page loads and expected status codes.
+* 404 and 405 behavior.
+* Form validation and invalid input.
+* Authentication and authorization boundaries.
+* Database success, missing records, and rollback behavior.
+* File upload restrictions.
+* JSON response shape for API endpoints.
+
+Use a separate testing database and test configuration. Never run tests against
+production data.
+
+
+15. DEPENDENCIES AND ENVIRONMENTS
+---------------------------------
+
+Create and use a virtual environment:
+
+    python -m venv .venv
+
+Activate it, then install dependencies:
+
+    python -m pip install Flask
+    python -m pip freeze > requirements.txt
+
+Rules:
+
+* Install packages into the same environment used to run Flask.
+* Keep requirements.txt or pyproject.toml updated.
+* Do not commit the .venv directory.
+* Pin or constrain production dependencies and update them deliberately.
+* Verify imports using the selected interpreter, not a different system Python.
+
+
+16. DEVELOPMENT SERVER VS PRODUCTION
+------------------------------------
+
+The built-in Flask server is for local development only.
+
+Rules:
+
+* Do not deploy app.run(debug=True) to production.
+* Use a production WSGI server such as Waitress on Windows or Gunicorn on
+  compatible Unix deployments.
+* Put a reverse proxy and HTTPS in front of production applications where
+  appropriate.
+* Set production environment variables explicitly.
+* Disable debug mode and the interactive debugger in production.
+* Configure logging, health checks, timeouts, workers, and static-file serving.
+* Test the production start command before deployment.
+
+
+17. BEGINNER CHECKLIST BEFORE RUNNING
+-------------------------------------
+
+[ ] The intended virtual environment is active.
+[ ] Flask is installed in that environment.
+[ ] The app contains app = Flask(__name__).
+[ ] app.run() is protected by if __name__ == "__main__":.
+[ ] HTML files are inside templates/.
+[ ] CSS, JavaScript, and images are inside static/.
+[ ] Templates use url_for("static", filename=...).
+[ ] Routes use url_for instead of hard-coded internal URLs.
+[ ] The server is running before opening http://127.0.0.1:5000/.
+[ ] The browser is opening the correct port and route.
+[ ] Debug mode is disabled before deployment.
+[ ] Secrets are in environment variables and not committed.
+[ ] User input is validated on the server.
+[ ] POST requests use CSRF protection where required.
+[ ] Tests cover the important routes and failure cases.
