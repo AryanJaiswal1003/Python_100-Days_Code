@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<!-- The Flask route provides the list as the Jinja variable all_posts. -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway" rel="stylesheet">
+    <!-- Flask static assets are stored in the static folder. -->
+    <link rel="stylesheet" href="../static/css/styles.css">
+</head>
+<body>
+<div class="wrapper">
+    <div class="top">
+        <div class="title"><h1>My Blog</h1></div>
+    </div>
+
+    <!-- Create one card for each Post object passed by main.py. -->
+    {% for post in all_posts: %}
+    <div class="content">
+        <div class="card">
+            <h2>{{ post.title }}</h2>
+            <p class="text">{{ post.subtitle }}</p>
+            <!-- url_for keeps links aligned with the show_post route. -->
+            <a href="{{ url_for('show_post', index=post.id) }}">Read</a>
+        </div>
+
+    </div>
+    {% endfor %}
+
+</div>
+</body>
+<footer>
+    <p>Thank You!!</p>
+</footer>
+</html>

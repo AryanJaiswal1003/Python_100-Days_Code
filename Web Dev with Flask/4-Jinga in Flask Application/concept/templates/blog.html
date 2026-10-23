@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<!-- Jinja evaluates template expressions and control blocks while rendering. -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Blog</title>
+</head>
+<body>
+    <!-- The route passes the Python list as the template variable "posts". -->
+    {% for blog_post in posts: %}
+        <!-- This condition currently shows only the post whose id is 2. -->
+        {% if blog_post["id"] == 2: %}
+        <h1>{{ blog_post["title"] }}</h1>
+        <h2>{{ blog_post["subtitle"] }}</h2>
+        {% endif %}
+    {% endfor %}
+</body>
+</html>
